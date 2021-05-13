@@ -27,7 +27,7 @@ namespace Microservice.B.Controllers
             });
         }
 
-        [HttpPost("{bookId:guid}")]
+        [HttpPost]
         public async Task<IActionResult> Post(ReviewViewModel viewModel)
         {
             //  Get book details here from Book microservice
