@@ -22,4 +22,13 @@ namespace Microservice.B.Models
         public string Body { get; set; }
         public int Rating { get; set; }
     }
+
+    public class Message
+    {
+        public Guid Id { get; set; }
+        public string MessageTitle { get; set; }
+        public string MessageBody { get; set; }
+        public DateTime CreatedOn { get; set; }
+
+    }
 }

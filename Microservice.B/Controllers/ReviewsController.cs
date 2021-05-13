@@ -1,8 +1,10 @@
-﻿using Microservice.B.Models;
+﻿using Confluent.Kafka;
+using Microservice.B.Models;
 using Microservice.B.Services;
 using Microservice.B.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,10 +17,12 @@ namespace Microservice.B.Controllers
     public class ReviewsController : ControllerBase
     {
         private readonly IBookService _bookService;
+        private readonly ProducerConfig _producerConfig;
 
-        public ReviewsController(IBookService bookService)
+        public ReviewsController(IBookService bookService, ProducerConfig producerConfig)
         {
             _bookService = bookService;
+            _producerConfig = producerConfig;
         }
 
         [HttpGet("{id:guid}")]
@@ -54,6 +58,21 @@ namespace Microservice.B.Controllers
                 Reviewer = viewModel.Reviewer
             };
 
+            //  Send message to Microservice.C
+            var messageModel = new Message
+            {
+                CreatedOn = DateTime.UtcNow,
+                Id = Guid.NewGuid(),
+                MessageBody = $"Review written for Book id: {viewModel.BookId} by: {viewModel.Reviewer}",
+                MessageTitle = "New Review"
+            };
+
+            string messageString = JsonConvert.SerializeObject(messageModel);
+            using (var producer = new ProducerBuilder<Null, string>(_producerConfig).Build())
+            {
+                await producer.ProduceAsync("ms-b", new Message<Null, string> { Value = messageString });
+                producer.Flush(TimeSpan.FromSeconds(10));
+            }
 
             return Ok(new { Message = "Created", Payload = review });
         }
