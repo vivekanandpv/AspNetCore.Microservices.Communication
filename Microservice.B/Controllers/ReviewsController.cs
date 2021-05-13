@@ -1,4 +1,5 @@
 ﻿using Microservice.B.Models;
+using Microservice.B.Services;
 using Microservice.B.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,13 @@ namespace Microservice.B.Controllers
     [ApiController]
     public class ReviewsController : ControllerBase
     {
+        private readonly IBookService _bookService;
+
+        public ReviewsController(IBookService bookService)
+        {
+            _bookService = bookService;
+        }
+
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<Review>> Get(Guid id)
         {
@@ -27,13 +35,27 @@ namespace Microservice.B.Controllers
             });
         }
 
-        [HttpPost("{bookId:guid}")]
-        public async Task<IActionResult> Post(ReviewViewModel viewModel)
+        [HttpPost]
+        public async Task<IActionResult> Post(ReviewCreateViewModel viewModel)
         {
             //  Get book details here from Book microservice
-            //  create domain object and save
+            var book = await _bookService.GetBook(viewModel.BookId);
 
-            return Ok(new { Message = "Not yet implemented" });
+            //  create domain object and save
+            var review = new Review
+            {
+                BookId = book.Id,
+                BookTitle = book.Title,
+                BookCategory = book.Category,
+                Id = Guid.NewGuid(),
+                Body = viewModel.Body,
+                Title = viewModel.Title,
+                Rating = viewModel.Rating,
+                Reviewer = viewModel.Reviewer
+            };
+
+
+            return Ok(new { Message = "Created", Payload = review });
         }
 
     }

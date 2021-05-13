@@ -5,9 +5,8 @@ using System.Threading.Tasks;
 
 namespace Microservice.B.ViewModels
 {
-    public class ReviewViewModel
+    public class ReviewCreateViewModel
     {
-        public Guid Id { get; set; }
         public Guid BookId { get; set; }
         public string Reviewer { get; set; }
         public string Title { get; set; }
