@@ -1,3 +1,4 @@
+using Microservice.C.Models;
 using Microservice.C.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -26,7 +27,8 @@ namespace Microservice.C
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-            services.AddHostedService<KafkaConsumerService>();
+            services.AddHostedService<RabbitMQConsumerService>();
+            services.Configure<RabbitMQConfig>(Configuration.GetSection("RabbitMQConfig"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

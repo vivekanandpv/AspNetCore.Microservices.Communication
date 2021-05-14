@@ -1,4 +1,5 @@
 using Confluent.Kafka;
+using Microservice.B.MQ;
 using Microservice.B.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -27,16 +28,12 @@ namespace Microservice.B
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            var producerConfig = new ProducerConfig();
-            _configuration.Bind("producer", producerConfig);
-
-            services.AddSingleton<ProducerConfig>(producerConfig);
-
             services.AddControllers();
             services.AddHttpClient<IBookService, BookService>(client =>
             {
                 client.BaseAddress = new Uri(_configuration["BookServiceUrl"]);
             });
+            services.AddRabbitMQ(_configuration);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

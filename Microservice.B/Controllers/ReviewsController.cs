@@ -1,5 +1,6 @@
 ﻿using Confluent.Kafka;
 using Microservice.B.Models;
+using Microservice.B.MQ;
 using Microservice.B.Services;
 using Microservice.B.ViewModels;
 using Microsoft.AspNetCore.Http;
@@ -17,12 +18,12 @@ namespace Microservice.B.Controllers
     public class ReviewsController : ControllerBase
     {
         private readonly IBookService _bookService;
-        private readonly ProducerConfig _producerConfig;
+        private readonly IRabbitMQManager _rabbitMQManager;
 
-        public ReviewsController(IBookService bookService, ProducerConfig producerConfig)
+        public ReviewsController(IBookService bookService, IRabbitMQManager rabbitMQManager)
         {
             _bookService = bookService;
-            _producerConfig = producerConfig;
+            _rabbitMQManager = rabbitMQManager;
         }
 
         [HttpGet("{id:guid}")]
@@ -67,12 +68,7 @@ namespace Microservice.B.Controllers
                 MessageTitle = "New Review"
             };
 
-            string messageString = JsonConvert.SerializeObject(messageModel);
-            using (var producer = new ProducerBuilder<Null, string>(_producerConfig).Build())
-            {
-                await producer.ProduceAsync("ms-b", new Message<Null, string> { Value = messageString });
-                producer.Flush(TimeSpan.FromSeconds(10));
-            }
+            _rabbitMQManager.Publish(messageModel, "ms-exchange", "topic", "ms-b-routing");
 
             return Ok(new { Message = "Created", Payload = review });
         }
