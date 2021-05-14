@@ -35,7 +35,12 @@ namespace Microservice.C.Services
                 UserName = _rabbitMQConfig.UserName,
                 Password = _rabbitMQConfig.Password,
                 VirtualHost = _rabbitMQConfig.VirtualHost,
-                Port = _rabbitMQConfig.Port
+                Port = _rabbitMQConfig.Port,
+                Ssl = new SslOption
+                {
+                    ServerName = _rabbitMQConfig.HostName,
+                    Enabled = true
+                }
             };
 
             // create connection  

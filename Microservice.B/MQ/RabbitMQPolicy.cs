@@ -30,6 +30,11 @@ namespace Microservice.B.MQ
                 Password = _rabbitMQConfig.Password,
                 Port = _rabbitMQConfig.Port,
                 VirtualHost = _rabbitMQConfig.VirtualHost,
+                Ssl = new SslOption
+                {
+                    ServerName = _rabbitMQConfig.HostName,
+                    Enabled = true
+                }
             };
 
             return factory.CreateConnection();
