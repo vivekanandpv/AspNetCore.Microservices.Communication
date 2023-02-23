@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microservice.B.Filters;
 using Polly;
 using Polly.Extensions.Http;
 using Polly.Timeout;
@@ -31,16 +32,27 @@ namespace Microservice.B
         public void ConfigureServices(IServiceCollection services)
         {
             //  Install packages: Polly and Microsoft.Extensions.Http.Polly
-            //  Get the retry policy
-            var retryPolicy = HttpPolicyExtensions
-                .HandleTransientHttpError()
-                .Or<TimeoutRejectedException>()
-                .WaitAndRetryAsync(3, a => TimeSpan.FromSeconds(15));
+            var policy1 = Policy
+                .HandleResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
+                .CircuitBreakerAsync(
+                    2,
+                    TimeSpan.FromSeconds(30),
+                    (r, ts) => Console.WriteLine("Broken"),
+                    () => Console.WriteLine("Closed"),
+                    () => Console.WriteLine("Half open")
+                    );
             
-            services.AddControllers();
-            services.AddHttpClient("appHttpClient",client => { client.BaseAddress = new Uri(_configuration["BookServiceUrl"]); })
-                .AddPolicyHandler(retryPolicy)
-                .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(5));
+            //  10% of requests should fail in 60 seconds, with minimum threshold of 3
+            //  If so, then the circuit remains broken for the next 1 minute
+            var policy2 = Policy
+                .HandleResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
+                .AdvancedCircuitBreakerAsync(0.1, TimeSpan.FromSeconds(30), 3, TimeSpan.FromMinutes(1));
+
+            services.AddControllers(options => options.Filters.Add<GeneralExceptionFilter>());
+            services.AddHttpClient("appHttpClient", client => { client.BaseAddress = new Uri(_configuration["BookServiceUrl"]); })
+                .AddPolicyHandler(policy1);
+
+
             services.AddScoped<IBookService, BookService>();
         }
 
