@@ -8,7 +8,11 @@ using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
+using Polly;
+using Polly.Extensions.Http;
+using Polly.Timeout;
 
 namespace Microservice.B
 {
@@ -26,11 +30,18 @@ namespace Microservice.B
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            //  Install packages: Polly and Microsoft.Extensions.Http.Polly
+            //  Get the retry policy
+            var retryPolicy = HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .Or<TimeoutRejectedException>()
+                .WaitAndRetryAsync(3, a => TimeSpan.FromSeconds(15));
+            
             services.AddControllers();
-            services.AddHttpClient<IBookService, BookService>(client =>
-            {
-                client.BaseAddress = new Uri(_configuration["BookServiceUrl"]);
-            });
+            services.AddHttpClient("appHttpClient",client => { client.BaseAddress = new Uri(_configuration["BookServiceUrl"]); })
+                .AddPolicyHandler(retryPolicy)
+                .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(5));
+            services.AddScoped<IBookService, BookService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -43,10 +54,7 @@ namespace Microservice.B
 
             app.UseRouting();
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
+            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
     }
 }

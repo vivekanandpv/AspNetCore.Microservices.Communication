@@ -15,16 +15,16 @@ namespace Microservice.B.Services
 
     public class BookService : IBookService
     {
-        private readonly HttpClient client;
+        private readonly HttpClient _client;
 
-        public BookService(HttpClient client)
+        public BookService(IHttpClientFactory clientFactory)
         {
-            this.client = client;
+            _client = clientFactory.CreateClient("appHttpClient");
         }
 
         public async Task<Book> GetBook(Guid id)
         {
-            var response = await client.GetAsync($"/api/books/{id}");
+            var response = await _client.GetAsync($"/api/books/{id}");
             return await response.GetAs<Book>();    //  see the extension method
         }
     }
