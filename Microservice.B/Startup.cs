@@ -32,25 +32,8 @@ namespace Microservice.B
         public void ConfigureServices(IServiceCollection services)
         {
             //  Install packages: Polly and Microsoft.Extensions.Http.Polly
-            var policy1 = Policy
-                .HandleResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
-                .CircuitBreakerAsync(
-                    2,
-                    TimeSpan.FromSeconds(30),
-                    (r, ts) => Console.WriteLine("Broken"),
-                    () => Console.WriteLine("Closed"),
-                    () => Console.WriteLine("Half open")
-                    );
-            
-            //  10% of requests should fail in 60 seconds, with minimum threshold of 3
-            //  If so, then the circuit remains broken for the next 1 minute
-            var policy2 = Policy
-                .HandleResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
-                .AdvancedCircuitBreakerAsync(0.1, TimeSpan.FromSeconds(30), 3, TimeSpan.FromMinutes(1));
-
             services.AddControllers(options => options.Filters.Add<GeneralExceptionFilter>());
-            services.AddHttpClient("appHttpClient", client => { client.BaseAddress = new Uri(_configuration["BookServiceUrl"]); })
-                .AddPolicyHandler(policy1);
+            services.AddHttpClient("appHttpClient", client => { client.BaseAddress = new Uri(_configuration["BookServiceUrl"]); });
 
 
             services.AddScoped<IBookService, BookService>();
