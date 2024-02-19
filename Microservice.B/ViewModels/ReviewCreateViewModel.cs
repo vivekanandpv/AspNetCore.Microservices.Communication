@@ -7,7 +7,7 @@ namespace Microservice.B.ViewModels
 {
     public class ReviewCreateViewModel
     {
-        public Guid BookId { get; set; }
+        public string BookId { get; set; }
         public string Reviewer { get; set; }
         public string Title { get; set; }
         public string Body { get; set; }

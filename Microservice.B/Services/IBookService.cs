@@ -10,7 +10,7 @@ namespace Microservice.B.Services
 {
     public interface IBookService
     {
-        Task<Book> GetBook(Guid id);
+        Task<Book> GetBook(string id);
     }
 
     public class BookService : IBookService
@@ -22,7 +22,7 @@ namespace Microservice.B.Services
             this.client = client;
         }
 
-        public async Task<Book> GetBook(Guid id)
+        public async Task<Book> GetBook(string id)
         {
             var response = await client.GetAsync($"/api/books/{id}");
             return await response.GetAs<Book>();    //  see the extension method
